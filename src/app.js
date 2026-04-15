@@ -80,7 +80,50 @@ function save(id, field) {
         const vol = window.workoutStore.calculateVolume(kg, reps, sets);
         const volEl = document.getElementById(`vol-${id}`);
         if (volEl) volEl.innerText = vol > 0 ? `${vol} kg` : '-';
+        
+        if (field === 'sets_done') {
+            updateDots(id, val);
+        }
     }
+}
+
+function markDotDone(id) {
+    const dotsContainer = document.getElementById(`dots-${id}`);
+    const tracker = document.getElementById(`sets-tracker-${id}`);
+    if (!dotsContainer || !tracker) return;
+    
+    const dots = dotsContainer.querySelectorAll('.dot');
+    const activeDots = Array.from(dots).filter(dot => !dot.classList.contains('opacity-20'));
+    
+    if (activeDots.length > 0) {
+        const dot = activeDots[0];
+        dot.classList.add('opacity-20', 'scale-75');
+        dot.classList.remove('bg-sky-400', 'shadow-[0_0_10px_rgba(56,189,248,0.5)]');
+        dot.classList.add('bg-slate-700');
+        
+        // If it was the last active dot, hide the tracker
+        if (activeDots.length === 1) {
+            setTimeout(() => tracker.classList.add('hidden'), 300);
+        }
+    }
+}
+
+function updateDots(id, count) {
+    const dotsContainer = document.getElementById(`dots-${id}`);
+    const tracker = document.getElementById(`sets-tracker-${id}`);
+    if (!dotsContainer || !tracker) return;
+    
+    const num = parseInt(count) || 0;
+    if (num <= 0) {
+        tracker.classList.add('hidden');
+        dotsContainer.innerHTML = '';
+        return;
+    }
+    
+    tracker.classList.remove('hidden');
+    dotsContainer.innerHTML = Array.from({length: num}).map(() => `
+        <div class="dot w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5)] transition-all duration-300"></div>
+    `).join('');
 }
 
 function saveSessionNote() {
@@ -99,6 +142,9 @@ function render() {
         const saved = window.workoutStore.getSavedExercise(currentWeek, ex.id);
         const vol = window.workoutStore.calculateVolume(saved.kg, saved.reps, saved.sets_done);
         const isRamp = ex.sets.toLowerCase().includes('rampa');
+        const totalSetsMatch = ex.sets.match(/\d+/g);
+        const totalSets = totalSetsMatch ? Math.max(...totalSetsMatch.map(Number)) : 0;
+        const setsDone = parseInt(saved.sets_done) || 0;
 
         const card = document.createElement('div');
         card.className = 'exercise-card p-5 shadow-lg';
@@ -106,9 +152,21 @@ function render() {
             <div class="flex justify-between items-start mb-5 text-left">
                 <div class="space-y-1">
                     <h3 class="font-black text-sky-400 text-lg leading-tight uppercase">${ex.name}</h3>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] text-slate-400 font-bold tracking-tighter uppercase">${ex.sets} × ${ex.repsTarget}</span>
-                        <span class="tempo-badge">${ex.tempo}</span>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-400 font-bold tracking-tighter uppercase">${ex.sets} × ${ex.repsTarget}</span>
+                            <span class="tempo-badge">${ex.tempo}</span>
+                        </div>
+                        <div id="sets-tracker-${ex.id}" class="flex items-center gap-2 bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-700/50 ${setsDone > 0 ? '' : 'hidden'}">
+                            <div id="dots-${ex.id}" class="flex gap-1">
+                                ${Array.from({length: setsDone}).map(() => `
+                                    <div class="dot w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5)] transition-all duration-300"></div>
+                                `).join('')}
+                            </div>
+                            <button onclick="window.app.markDotDone('${ex.id}')" class="text-sky-400 hover:text-sky-300 p-0.5 active:scale-75 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <a href="${ex.link}" target="_blank" class="bg-sky-500/10 border border-sky-500/30 p-2.5 rounded-xl shadow-inner active:scale-90 transition">
@@ -117,7 +175,10 @@ function render() {
             </div>
             
             <div class="grid grid-cols-4 gap-2 mb-3">
-                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">SERIE</label><input type="number" id="sets_done-${ex.id}" value="${saved.sets_done || ''}" oninput="window.app.save('${ex.id}', 'sets_done')" class="input-field" placeholder="-"></div>
+                <div class="flex flex-col">
+                    <label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">SERIE</label>
+                    <input type="number" id="sets_done-${ex.id}" value="${saved.sets_done || ''}" oninput="window.app.save('${ex.id}', 'sets_done')" class="input-field text-center" placeholder="-">
+                </div>
                 <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">POWT.</label><input type="number" id="reps-${ex.id}" value="${saved.reps || ''}" oninput="window.app.save('${ex.id}', 'reps')" class="input-field" placeholder="-"></div>
                 <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">KG</label><input type="number" step="0.5" id="kg-${ex.id}" value="${saved.kg || ''}" oninput="window.app.save('${ex.id}', 'kg')" class="input-field" placeholder="-"></div>
                 <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">RIR</label><input type="text" id="rir-${ex.id}" value="${saved.rir || ''}" oninput="window.app.save('${ex.id}', 'rir')" class="input-field" placeholder="?"></div>
@@ -327,7 +388,8 @@ function updateExerciseChart() {
 window.app = {
     init, changeWeek, changeDay, save, calculateWeights,
     toggleTimerUI, toggleTimer, startPreset, resetTimer, toggleInfo,
-    startCustom, updateStats, updateExerciseChart, exportToCSV, saveSessionNote
+    startCustom, updateStats, updateExerciseChart, exportToCSV, saveSessionNote,
+    markDotDone
 };
 
 document.addEventListener('DOMContentLoaded', init);
