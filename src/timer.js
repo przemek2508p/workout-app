@@ -41,13 +41,14 @@ function initTimer(onUpdate) {
 
             if (timeLeft === 0) {
                 stop();
-                // Finished: 4 beeps (mid-low pitch)
+                // Finished: 5 beeps (mid-low pitch, slower)
                 playBeep(523, 0.2);
-                setTimeout(() => playBeep(523, 0.2), 350);
-                setTimeout(() => playBeep(523, 0.2), 700);
-                setTimeout(() => playBeep(523, 0.2), 1050);
+                setTimeout(() => playBeep(523, 0.2), 600);
+                setTimeout(() => playBeep(523, 0.2), 1200);
+                setTimeout(() => playBeep(523, 0.2), 1800);
+                setTimeout(() => playBeep(523, 0.2), 2400);
                 
-                if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200, 100, 200]);
+                if (window.navigator.vibrate) window.navigator.vibrate([200, 400, 200, 400, 200, 400, 200, 400, 200]);
             }
             
             onUpdate({ timeLeft, totalTime, isRunning });
