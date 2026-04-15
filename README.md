@@ -1,4 +1,4 @@
-# KotPersonal Tracker v2.1 - System Przemka
+# WORKOUT APP
 
 Moderny tracker treningowy zoptymalizowany pod urządzenia mobilne. Pozwala na śledzenie objętości, zarządzanie czasem przerwy oraz analizę postępów w czasie.
 

@@ -26,7 +26,7 @@ function init() {
         weekDiv.innerHTML = '';
         for (let i = 1; i <= 8; i++) {
             const btn = document.createElement('button');
-            btn.className = `week-btn flex-shrink-0 w-11 h-11 rounded-xl border border-slate-700 flex items-center justify-center text-sm font-bold ${i === 1 ? 'active' : ''}`;
+            btn.className = `week-btn w-full aspect-square rounded-xl border border-neutral-800 flex items-center justify-center text-[11px] font-black transition-all duration-200 ${i === 1 ? 'active' : ''}`;
             btn.innerText = i;
             btn.id = `wk-${i}`;
             btn.onclick = () => changeWeek(i);
@@ -80,7 +80,7 @@ function save(id, field) {
         const vol = window.workoutStore.calculateVolume(kg, reps, sets);
         const volEl = document.getElementById(`vol-${id}`);
         if (volEl) volEl.innerText = vol > 0 ? `${vol} kg` : '-';
-        
+
         if (field === 'sets_done') {
             updateDots(id, val);
         }
@@ -91,19 +91,20 @@ function markDotDone(id) {
     const dotsContainer = document.getElementById(`dots-${id}`);
     const tracker = document.getElementById(`sets-tracker-${id}`);
     if (!dotsContainer || !tracker) return;
-    
+
     const dots = dotsContainer.querySelectorAll('.dot');
     const activeDots = Array.from(dots).filter(dot => !dot.classList.contains('opacity-20'));
-    
+
     if (activeDots.length > 0) {
         const dot = activeDots[0];
         dot.classList.add('opacity-20', 'scale-75');
-        dot.classList.remove('bg-sky-400', 'shadow-[0_0_10px_rgba(56,189,248,0.5)]');
-        dot.classList.add('bg-slate-700');
-        
-        // If it was the last active dot, hide the tracker
+        dot.classList.remove('bg-[#f97316]', 'shadow-[0_0_6px_rgba(249,115,22,0.4)]');
+        dot.classList.add('bg-neutral-900');
+
+        // If it was the last active dot, fade out the tracker
         if (activeDots.length === 1) {
-            setTimeout(() => tracker.classList.add('hidden'), 300);
+            tracker.classList.add('tracker-fade-out');
+            setTimeout(() => tracker.classList.add('hidden'), 500);
         }
     }
 }
@@ -112,17 +113,17 @@ function updateDots(id, count) {
     const dotsContainer = document.getElementById(`dots-${id}`);
     const tracker = document.getElementById(`sets-tracker-${id}`);
     if (!dotsContainer || !tracker) return;
-    
+
     const num = parseInt(count) || 0;
     if (num <= 0) {
         tracker.classList.add('hidden');
         dotsContainer.innerHTML = '';
         return;
     }
-    
-    tracker.classList.remove('hidden');
-    dotsContainer.innerHTML = Array.from({length: num}).map(() => `
-        <div class="dot w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5)] transition-all duration-300"></div>
+
+    tracker.classList.remove('hidden', 'tracker-fade-out');
+    dotsContainer.innerHTML = Array.from({ length: num }).map(() => `
+        <div class="dot w-2.5 h-2.5 rounded-full bg-[#f97316] shadow-[0_0_6px_rgba(249,115,22,0.4)] transition-all duration-300"></div>
     `).join('');
 }
 
@@ -135,7 +136,7 @@ function render() {
     const list = document.getElementById('exercise-list');
     if (!list) return;
     list.innerHTML = '';
-    
+
     if (!window.workoutData[currentDay]) return;
 
     window.workoutData[currentDay].forEach(ex => {
@@ -147,66 +148,80 @@ function render() {
         const setsDone = parseInt(saved.sets_done) || 0;
 
         const card = document.createElement('div');
-        card.className = 'exercise-card p-5 shadow-lg';
+        card.className = 'exercise-card p-6';
         card.innerHTML = `
-            <div class="flex justify-between items-start mb-5 text-left">
-                <div class="space-y-1">
-                    <h3 class="font-black text-sky-400 text-lg leading-tight uppercase">${ex.name}</h3>
+            <div class="flex justify-between items-start mb-6 text-left">
+                <div class="space-y-1.5">
+                    <h3 class="font-black text-white text-xl tracking-tight leading-none uppercase">${ex.name}</h3>
                     <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-slate-400 font-bold tracking-tighter uppercase">${ex.sets} × ${ex.repsTarget}</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[11px] text-neutral-500 font-extrabold tracking-tight uppercase">${ex.sets} × ${ex.repsTarget}</span>
                             <span class="tempo-badge">${ex.tempo}</span>
                         </div>
-                        <div id="sets-tracker-${ex.id}" class="flex items-center gap-2 bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-700/50 ${setsDone > 0 ? '' : 'hidden'}">
-                            <div id="dots-${ex.id}" class="flex gap-1">
-                                ${Array.from({length: setsDone}).map(() => `
-                                    <div class="dot w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5)] transition-all duration-300"></div>
+                        <div id="sets-tracker-${ex.id}" class="sets-tracker flex items-center gap-2 bg-[#f97316]/10 px-2 py-1.5 rounded-xl border border-[#f97316]/20 ${setsDone > 0 ? '' : 'hidden'}">
+                            <div id="dots-${ex.id}" class="flex gap-1.5">
+                                ${Array.from({ length: setsDone }).map(() => `
+                                    <div class="dot w-2.5 h-2.5 rounded-full bg-[#f97316] shadow-[0_0_6px_rgba(249,115,22,0.4)] transition-all duration-300"></div>
                                 `).join('')}
                             </div>
-                            <button onclick="window.app.markDotDone('${ex.id}')" class="text-sky-400 hover:text-sky-300 p-0.5 active:scale-75 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <button onclick="window.app.markDotDone('${ex.id}')" class="text-[#f97316] hover:text-[#f97316]/80 p-0.5 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </button>
                         </div>
                     </div>
                 </div>
-                <a href="${ex.link}" target="_blank" class="bg-sky-500/10 border border-sky-500/30 p-2.5 rounded-xl shadow-inner active:scale-90 transition">
-                    <svg class="w-5 h-5 text-sky-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                <a href="${ex.link}" target="_blank" class="bg-neutral-900 border border-neutral-800 p-3 rounded-2xl shadow-lg transition hover:bg-neutral-800">
+                    <svg class="w-6 h-6 text-neutral-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
                 </a>
             </div>
             
-            <div class="grid grid-cols-4 gap-2 mb-3">
+            <div class="grid grid-cols-4 gap-3 mb-4">
                 <div class="flex flex-col">
-                    <label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">SERIE</label>
-                    <input type="number" id="sets_done-${ex.id}" value="${saved.sets_done || ''}" oninput="window.app.save('${ex.id}', 'sets_done')" class="input-field text-center" placeholder="-">
+                    <label class="text-[8px] font-black text-slate-500 uppercase mb-2 ml-1 tracking-[0.15em] text-center">SERIE</label>
+                    <input type="number" id="sets_done-${ex.id}" value="${saved.sets_done || ''}" oninput="window.app.save('${ex.id}', 'sets_done')" class="input-field" placeholder="-">
                 </div>
-                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">POWT.</label><input type="number" id="reps-${ex.id}" value="${saved.reps || ''}" oninput="window.app.save('${ex.id}', 'reps')" class="input-field" placeholder="-"></div>
-                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">KG</label><input type="number" step="0.5" id="kg-${ex.id}" value="${saved.kg || ''}" oninput="window.app.save('${ex.id}', 'kg')" class="input-field" placeholder="-"></div>
-                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">RIR</label><input type="text" id="rir-${ex.id}" value="${saved.rir || ''}" oninput="window.app.save('${ex.id}', 'rir')" class="input-field" placeholder="?"></div>
+                <div class="flex flex-col">
+                    <label class="text-[8px] font-black text-slate-500 uppercase mb-2 ml-1 tracking-[0.15em] text-center">POWT.</label>
+                    <input type="number" id="reps-${ex.id}" value="${saved.reps || ''}" oninput="window.app.save('${ex.id}', 'reps')" class="input-field" placeholder="-">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[8px] font-black text-slate-500 uppercase mb-2 ml-1 tracking-[0.15em] text-center">KG</label>
+                    <input type="number" step="0.5" id="kg-${ex.id}" value="${saved.kg || ''}" oninput="window.app.save('${ex.id}', 'kg')" class="input-field" placeholder="-">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[8px] font-black text-slate-500 uppercase mb-2 ml-1 tracking-[0.15em] text-center">RIR</label>
+                    <input type="text" id="rir-${ex.id}" value="${saved.rir || ''}" oninput="window.app.save('${ex.id}', 'rir')" class="input-field" placeholder="?">
+                </div>
             </div>
 
-            <div class="grid ${isRamp ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mb-4">
+            <div class="grid ${isRamp ? 'grid-cols-2' : 'grid-cols-1'} gap-3 mb-5">
                 <div class="flex flex-col">
-                    <label class="text-[7px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-widest text-left">PRZERWA (S)</label>
-                    <input type="number" id="rest_time-${ex.id}" value="${saved.rest_time || ''}" oninput="window.app.save('${ex.id}', 'rest_time')" class="input-field !text-left px-3 text-sky-300" placeholder="Sekundy">
+                    <label class="text-[8px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-[0.15em] text-left">CZAS PRZERWY</label>
+                    <div class="relative">
+                        <input type="number" id="rest_time-${ex.id}" value="${saved.rest_time || ''}" oninput="window.app.save('${ex.id}', 'rest_time')" class="input-field !text-left px-4 text-[#f97316]" placeholder="Sekundy">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-600">S</span>
+                    </div>
                 </div>
                 ${isRamp ? `
                 <div class="flex flex-col">
-                    <label class="text-[7px] font-black text-amber-500 uppercase mb-1.5 ml-1 tracking-widest text-left">RAMP TOP (KG)</label>
-                    <input type="number" step="0.5" id="ramp_top-${ex.id}" value="${saved.ramp_top || ''}" oninput="window.app.save('${ex.id}', 'ramp_top')" class="input-field !text-left px-3 border-amber-500/30 text-amber-400" placeholder="Ciężar rampy">
+                    <label class="text-[8px] font-black text-amber-500 uppercase mb-2 ml-1 tracking-[0.15em] text-left">RAMP TOP</label>
+                    <div class="relative">
+                        <input type="number" step="0.5" id="ramp_top-${ex.id}" value="${saved.ramp_top || ''}" oninput="window.app.save('${ex.id}', 'ramp_top')" class="input-field !text-left px-4 border-amber-500/20 text-amber-400 bg-amber-500/5 placeholder:text-amber-900/50" placeholder="KG">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-900/50">KG</span>
+                    </div>
                 </div>
                 ` : ''}
             </div>
 
-            <div class="mb-4">
-                <label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-left">NOTATKI DO ĆWICZENIA</label>
-                <input type="text" id="notes-${ex.id}" value="${saved.notes || ''}" oninput="window.app.save('${ex.id}', 'notes')" class="input-field !text-left px-3 text-xs font-normal italic" placeholder="np. lekko poszło, ból w łokciu...">
+            <div class="mb-5">
+                <label class="text-[8px] font-black text-slate-500 uppercase mb-2 ml-1 tracking-[0.15em] text-left">KOMENTARZ DO ĆWICZENIA</label>
+                <input type="text" id="notes-${ex.id}" value="${saved.notes || ''}" oninput="window.app.save('${ex.id}', 'notes')" class="input-field !text-left px-4 text-xs font-medium placeholder:italic placeholder:text-slate-600" placeholder="np. lekko poszło, ból w łokciu...">
             </div>
 
-            <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
-                <p class="text-[10px] text-slate-400 italic flex-1 mr-4">● ${ex.note}</p>
-                <div class="text-right flex-shrink-0">
-                    <span class="text-[8px] text-slate-500 font-bold uppercase block tracking-widest">Objętość</span>
-                    <span id="vol-${ex.id}" class="text-xs font-black text-sky-400">${vol > 0 ? vol + ' kg' : '-'}</span>
+            <div class="mt-6 pt-5 border-t border-slate-700/40 flex justify-end items-end">
+                <div class="text-right bg-black p-4 rounded-2xl border border-neutral-900 min-w-[80px]">
+                    <span class="text-[8px] text-neutral-600 font-black uppercase block tracking-[0.2em] mb-1">Vol</span>
+                    <span id="vol-${ex.id}" class="text-sm font-black text-[#f97316] tabular-nums">${vol > 0 ? vol.toLocaleString() + '<small class="text-[10px] ml-0.5">kg</small>' : '-'}</span>
                 </div>
             </div>
         `;
@@ -216,15 +231,17 @@ function render() {
     // Add Session Notes at the bottom
     const sessionNotes = window.workoutStore.getSessionNotes(currentWeek, currentDay);
     const notesCard = document.createElement('div');
-    notesCard.className = 'exercise-card p-6 border-dashed border-sky-500/30 bg-sky-500/5 mt-8';
+    notesCard.className = 'exercise-card p-10 border-dashed border-[#f97316]/10 bg-[#f97316]/5 mt-14 mb-24';
     notesCard.innerHTML = `
-        <h3 class="text-sky-400 font-black text-sm uppercase mb-4 flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-            Uwagi do całego treningu
+        <h3 class="text-[#f97316] font-black text-lg uppercase mb-6 flex items-center gap-4">
+            <div class="bg-[#f97316]/10 p-3 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            </div>
+            Session Summary
         </h3>
         <textarea id="session-notes-input" oninput="window.app.saveSessionNote()" 
-            class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-slate-300 focus:border-sky-500 outline-none min-h-[100px]" 
-            placeholder="Jak się czułeś? Coś do poprawy w następnym tygodniu?">${sessionNotes}</textarea>
+            class="input-field !text-left !px-6 !py-5 text-sm font-medium focus:ring-2 focus:ring-[#f97316]/30 outline-none min-h-[160px] placeholder:text-neutral-700" 
+            placeholder="Log your session performance...">${sessionNotes}</textarea>
     `;
     list.appendChild(notesCard);
 }
@@ -241,24 +258,24 @@ function calculateWeights() {
     `).join('');
 }
 
-function toggleTimerUI() { 
-    document.getElementById('rest-timer-ui').classList.toggle('active'); 
-    document.getElementById('rest-timer-ui-overlay').classList.toggle('hidden'); 
+function toggleTimerUI() {
+    document.getElementById('rest-timer-ui').classList.toggle('active');
+    document.getElementById('rest-timer-ui-overlay').classList.toggle('hidden');
 }
 function toggleTimer() {
     const status = timer.getStatus();
     if (status.isRunning) timer.pause();
     else timer.start();
 }
-function startPreset(s) { 
-    timer.set(s); 
-    timer.start(); 
+function startPreset(s) {
+    timer.set(s);
+    timer.start();
 }
-function resetTimer() { 
-    timer.reset(); 
+function resetTimer() {
+    timer.reset();
 }
-function toggleInfo() { 
-    document.getElementById('info-modal').classList.toggle('hidden'); 
+function toggleInfo() {
+    document.getElementById('info-modal').classList.toggle('hidden');
 }
 
 function startCustom() {
@@ -292,16 +309,16 @@ function updateStats() {
 
 function exportToCSV() {
     console.log('Eksport do CSV - start');
-    let csv = 'sep=;\n'; 
+    let csv = 'sep=;\n';
     csv += 'Tydzień;Dzień;Ćwiczenie;Tempo;Serie;Powtórzenia;KG;RIR;Przerwa;Rampa Top;Notatki Ćwiczenia;Objetość;Uwagi Trening\n';
-    
+
     for (let w = 1; w <= 8; w++) {
         ['A1', 'B1', 'A2', 'B2'].forEach(dayId => {
             const sessionNote = (window.workoutStore.getSessionNotes(w, dayId) || '').replace(/;/g, ',').replace(/\n/g, ' ');
             window.workoutData[dayId].forEach((ex, idx) => {
                 const saved = window.workoutStore.getSavedExercise(w, ex.id);
                 const vol = window.workoutStore.calculateVolume(saved.kg, saved.reps, saved.sets_done);
-                
+
                 const row = [
                     w,
                     dayId,
