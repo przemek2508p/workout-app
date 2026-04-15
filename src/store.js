@@ -2,7 +2,7 @@ const STORAGE_VERSION = 'v2.1';
 
 function getSavedExercise(week, id) {
     const key = `kot_prz_${STORAGE_VERSION}_w${week}_${id}`;
-    return JSON.parse(localStorage.getItem(key) || '{"kg":"","reps":"","rir":"","sets_done":""}');
+    return JSON.parse(localStorage.getItem(key) || '{"kg":"","reps":"","rir":"","sets_done":"","rest_time":"","notes":"","ramp_top":""}');
 }
 
 function saveExercise(week, id, field, value) {
@@ -13,6 +13,16 @@ function saveExercise(week, id, field, value) {
     return data;
 }
 
+function getSessionNotes(week, dayId) {
+    const key = `kot_prz_${STORAGE_VERSION}_w${week}_notes_${dayId}`;
+    return localStorage.getItem(key) || '';
+}
+
+function saveSessionNotes(week, dayId, note) {
+    const key = `kot_prz_${STORAGE_VERSION}_w${week}_notes_${dayId}`;
+    localStorage.setItem(key, note);
+}
+
 function calculateVolume(kg, reps, sets) {
     const v_kg = parseFloat(kg) || 0;
     const v_reps = parseFloat(reps) || 0;
@@ -20,4 +30,4 @@ function calculateVolume(kg, reps, sets) {
     return v_kg * v_reps * v_sets;
 }
 
-window.workoutStore = { getSavedExercise, saveExercise, calculateVolume };
+window.workoutStore = { getSavedExercise, saveExercise, calculateVolume, getSessionNotes, saveSessionNotes };

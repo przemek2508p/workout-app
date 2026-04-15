@@ -73,13 +73,19 @@ function save(id, field) {
     const val = input.value;
     window.workoutStore.saveExercise(currentWeek, id, field, val);
 
-    // Update volume
-    const kg = document.getElementById(`kg-${id}`)?.value || 0;
-    const reps = document.getElementById(`reps-${id}`)?.value || 0;
-    const sets = document.getElementById(`sets_done-${id}`)?.value || 0;
-    const vol = window.workoutStore.calculateVolume(kg, reps, sets);
-    const volEl = document.getElementById(`vol-${id}`);
-    if (volEl) volEl.innerText = vol > 0 ? `${vol} kg` : '-';
+    if (field === 'kg' || field === 'reps' || field === 'sets_done') {
+        const kg = document.getElementById(`kg-${id}`)?.value || 0;
+        const reps = document.getElementById(`reps-${id}`)?.value || 0;
+        const sets = document.getElementById(`sets_done-${id}`)?.value || 0;
+        const vol = window.workoutStore.calculateVolume(kg, reps, sets);
+        const volEl = document.getElementById(`vol-${id}`);
+        if (volEl) volEl.innerText = vol > 0 ? `${vol} kg` : '-';
+    }
+}
+
+function saveSessionNote() {
+    const val = document.getElementById('session-notes-input')?.value || '';
+    window.workoutStore.saveSessionNotes(currentWeek, currentDay, val);
 }
 
 function render() {
@@ -92,6 +98,7 @@ function render() {
     window.workoutData[currentDay].forEach(ex => {
         const saved = window.workoutStore.getSavedExercise(currentWeek, ex.id);
         const vol = window.workoutStore.calculateVolume(saved.kg, saved.reps, saved.sets_done);
+        const isRamp = ex.sets.toLowerCase().includes('rampa');
 
         const card = document.createElement('div');
         card.className = 'exercise-card p-5 shadow-lg';
@@ -108,15 +115,35 @@ function render() {
                     <svg class="w-5 h-5 text-sky-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
                 </a>
             </div>
-            <div class="grid grid-cols-4 gap-2">
-                <div class="flex flex-col"><label class="text-[8px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">SERIE</label><input type="number" id="sets_done-${ex.id}" value="${saved.sets_done || ''}" oninput="window.app.save('${ex.id}', 'sets_done')" class="input-field" placeholder="-"></div>
-                <div class="flex flex-col"><label class="text-[8px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">POWT.</label><input type="number" id="reps-${ex.id}" value="${saved.reps || ''}" oninput="window.app.save('${ex.id}', 'reps')" class="input-field" placeholder="-"></div>
-                <div class="flex flex-col"><label class="text-[8px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">KG</label><input type="number" step="0.5" id="kg-${ex.id}" value="${saved.kg || ''}" oninput="window.app.save('${ex.id}', 'kg')" class="input-field" placeholder="-"></div>
-                <div class="flex flex-col"><label class="text-[8px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">RIR</label><input type="text" id="rir-${ex.id}" value="${saved.rir || ''}" oninput="window.app.save('${ex.id}', 'rir')" class="input-field" placeholder="?"></div>
+            
+            <div class="grid grid-cols-4 gap-2 mb-3">
+                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">SERIE</label><input type="number" id="sets_done-${ex.id}" value="${saved.sets_done || ''}" oninput="window.app.save('${ex.id}', 'sets_done')" class="input-field" placeholder="-"></div>
+                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">POWT.</label><input type="number" id="reps-${ex.id}" value="${saved.reps || ''}" oninput="window.app.save('${ex.id}', 'reps')" class="input-field" placeholder="-"></div>
+                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">KG</label><input type="number" step="0.5" id="kg-${ex.id}" value="${saved.kg || ''}" oninput="window.app.save('${ex.id}', 'kg')" class="input-field" placeholder="-"></div>
+                <div class="flex flex-col"><label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-center">RIR</label><input type="text" id="rir-${ex.id}" value="${saved.rir || ''}" oninput="window.app.save('${ex.id}', 'rir')" class="input-field" placeholder="?"></div>
             </div>
+
+            <div class="grid ${isRamp ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mb-4">
+                <div class="flex flex-col">
+                    <label class="text-[7px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-widest text-left">PRZERWA (S)</label>
+                    <input type="number" id="rest_time-${ex.id}" value="${saved.rest_time || ''}" oninput="window.app.save('${ex.id}', 'rest_time')" class="input-field !text-left px-3 text-sky-300" placeholder="Sekundy">
+                </div>
+                ${isRamp ? `
+                <div class="flex flex-col">
+                    <label class="text-[7px] font-black text-amber-500 uppercase mb-1.5 ml-1 tracking-widest text-left">RAMP TOP (KG)</label>
+                    <input type="number" step="0.5" id="ramp_top-${ex.id}" value="${saved.ramp_top || ''}" oninput="window.app.save('${ex.id}', 'ramp_top')" class="input-field !text-left px-3 border-amber-500/30 text-amber-400" placeholder="Ciężar rampy">
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="mb-4">
+                <label class="text-[7px] font-black text-slate-500 uppercase mb-1.5 ml-1 tracking-widest text-left">NOTATKI DO ĆWICZENIA</label>
+                <input type="text" id="notes-${ex.id}" value="${saved.notes || ''}" oninput="window.app.save('${ex.id}', 'notes')" class="input-field !text-left px-3 text-xs font-normal italic" placeholder="np. lekko poszło, ból w łokciu...">
+            </div>
+
             <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
-                <p class="text-[10px] text-slate-400 italic">● ${ex.note}</p>
-                <div class="text-right">
+                <p class="text-[10px] text-slate-400 italic flex-1 mr-4">● ${ex.note}</p>
+                <div class="text-right flex-shrink-0">
                     <span class="text-[8px] text-slate-500 font-bold uppercase block tracking-widest">Objętość</span>
                     <span id="vol-${ex.id}" class="text-xs font-black text-sky-400">${vol > 0 ? vol + ' kg' : '-'}</span>
                 </div>
@@ -124,6 +151,21 @@ function render() {
         `;
         list.appendChild(card);
     });
+
+    // Add Session Notes at the bottom
+    const sessionNotes = window.workoutStore.getSessionNotes(currentWeek, currentDay);
+    const notesCard = document.createElement('div');
+    notesCard.className = 'exercise-card p-6 border-dashed border-sky-500/30 bg-sky-500/5 mt-8';
+    notesCard.innerHTML = `
+        <h3 class="text-sky-400 font-black text-sm uppercase mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            Uwagi do całego treningu
+        </h3>
+        <textarea id="session-notes-input" oninput="window.app.saveSessionNote()" 
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-slate-300 focus:border-sky-500 outline-none min-h-[100px]" 
+            placeholder="Jak się czułeś? Coś do poprawy w następnym tygodniu?">${sessionNotes}</textarea>
+    `;
+    list.appendChild(notesCard);
 }
 
 function calculateWeights() {
@@ -190,11 +232,12 @@ function updateStats() {
 function exportToCSV() {
     console.log('Eksport do CSV - start');
     let csv = 'sep=;\n'; 
-    csv += 'Tydzień;Dzień;Ćwiczenie;Tempo;Serie;Powtórzenia;KG;RIR;Objętość\n';
+    csv += 'Tydzień;Dzień;Ćwiczenie;Tempo;Serie;Powtórzenia;KG;RIR;Przerwa;Rampa Top;Notatki Ćwiczenia;Objetość;Uwagi Trening\n';
     
     for (let w = 1; w <= 8; w++) {
         ['A1', 'B1', 'A2', 'B2'].forEach(dayId => {
-            window.workoutData[dayId].forEach(ex => {
+            const sessionNote = (window.workoutStore.getSessionNotes(w, dayId) || '').replace(/;/g, ',').replace(/\n/g, ' ');
+            window.workoutData[dayId].forEach((ex, idx) => {
                 const saved = window.workoutStore.getSavedExercise(w, ex.id);
                 const vol = window.workoutStore.calculateVolume(saved.kg, saved.reps, saved.sets_done);
                 
@@ -207,7 +250,11 @@ function exportToCSV() {
                     saved.reps || 0,
                     saved.kg || 0,
                     (saved.rir || '').replace(/;/g, ','),
-                    vol
+                    saved.rest_time || '',
+                    saved.ramp_top || '',
+                    (saved.notes || '').replace(/;/g, ','),
+                    vol,
+                    idx === 0 ? sessionNote : '' // Only add session note to first row of that session
                 ].join(';');
                 csv += row + '\n';
             });
@@ -280,7 +327,7 @@ function updateExerciseChart() {
 window.app = {
     init, changeWeek, changeDay, save, calculateWeights,
     toggleTimerUI, toggleTimer, startPreset, resetTimer, toggleInfo,
-    startCustom, updateStats, updateExerciseChart, exportToCSV
+    startCustom, updateStats, updateExerciseChart, exportToCSV, saveSessionNote
 };
 
 document.addEventListener('DOMContentLoaded', init);
